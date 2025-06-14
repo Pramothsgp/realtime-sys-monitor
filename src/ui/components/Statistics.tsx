@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
-} from 'recharts';
+
 import { Cpu, Monitor, HardDrive, Sun, Moon } from 'lucide-react';
+import SystemDetails from './SystemDetails';
+import ChartCard from './ChartCard';
 
 interface Statistics {
   timestamp: string;
@@ -11,29 +11,14 @@ interface Statistics {
   storageUsed: number;
 }
 
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="p-4 rounded-2xl shadow-2xl border bg-white/95 dark:bg-gray-800/95 border-gray-200 dark:border-gray-600 text-gray-800 dark:text-white backdrop-blur-xl">
-        <p className="font-medium mb-2">{`Time: ${label}`}</p>
-        {payload.map((entry: any, index: number) => (
-          <p key={index} style={{ color: entry.color }} className="font-semibold">
-            {entry.name}: {entry.name.includes('Storage')
-              ? `${entry.value.toFixed(2)} GB`
-              : `${(entry.value * 100).toFixed(1)}%`}
-          </p>
-        ))}
-      </div>
-    );
-  }
-  return null;
-};
+
 
 const StatisticsComponent: React.FC = () => {
   const [data, setData] = useState<Statistics[]>([]);
   const [isDark, setIsDark] = useState<boolean>(
     window.matchMedia('(prefers-color-scheme: dark)').matches || false
   );
+  const [maxStorage, setMaxStorage] = useState<number>(0);
 
   const toggleTheme = () => {
     const root = document.documentElement;
@@ -57,14 +42,8 @@ const StatisticsComponent: React.FC = () => {
 
       //@ts-ignore
       const statistics = await window.electron.getStatistics();
-      const timestamp = new Date().toLocaleTimeString();
-      const stat: Statistics = {
-        timestamp,
-        cpuUsage: statistics.cpuUsage ?? 0,
-        ramUsage: statistics.ramUsage ?? 0,
-        storageUsed: statistics.storage?.used ?? 0,
-      };
-      setData([stat]);
+      console.log(statistics);
+      setMaxStorage(statistics.storage?.total ?? undefined);
     };
 
     fetchStatistics();
@@ -87,7 +66,7 @@ const StatisticsComponent: React.FC = () => {
             {isDark ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
           </button>
         </div>
-
+      <SystemDetails />
         {currentStats && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div className="p-6 rounded-3xl bg-gradient-to-r from-blue-100 to-blue-50 border border-blue-200 dark:from-blue-600/20 dark:to-blue-500/20 dark:border-blue-500/20">
@@ -136,52 +115,12 @@ const StatisticsComponent: React.FC = () => {
           <ChartCard title="Memory Usage" icon={<Monitor />} dataKey="ramUsage" color="#10b981" data={data} />
 
           {/* Storage Chart */}
-          <ChartCard title="Storage Usage" icon={<HardDrive />} dataKey="storageUsed" color="#f97316" data={data} format="gb" />
+          <ChartCard title="Storage Usage" icon={<HardDrive />} dataKey="storageUsed" color="#f97316" data={data} format="gb" max= {maxStorage} />
         </div>
       </div>
     </div>
   );
 };
 
-const ChartCard = ({ title, icon, dataKey, color, data, format }: any) => {
-  return (
-    <div className="relative overflow-hidden rounded-3xl bg-white/80 dark:bg-gray-800/50 backdrop-blur-xl border border-white/20 dark:border-gray-700/50 transition-all duration-300 hover:scale-[1.02]">
-      <div className="relative p-6">
-        <div className="flex items-center space-x-3 mb-4">
-          <div className="p-3 rounded-2xl bg-gray-100/50 dark:bg-gray-700/50">
-            {React.cloneElement(icon, {
-              className: `w-6 h-6 text-blue-600 dark:text-blue-400`,
-            })}
-          </div>
-          <h2 className="text-xl font-bold text-gray-800 dark:text-white">{title}</h2>
-        </div>
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" className="dark:stroke-gray-700" />
-            <XAxis dataKey="timestamp" stroke="#6b7280" fontSize={12} className="dark:stroke-gray-400" />
-            <YAxis
-              domain={format === 'gb' ? undefined : [0, 1]}
-              tickFormatter={(v) =>
-                format === 'gb' ? `${v.toFixed(0)} GB` : `${(v * 100).toFixed(0)}%`
-              }
-              stroke="#6b7280"
-              fontSize={12}
-              className="dark:stroke-gray-400"
-            />
-            <Tooltip content={<CustomTooltip />} />
-            <Line
-              type="monotone"
-              dataKey={dataKey}
-              stroke={color}
-              strokeWidth={3}
-              dot={false}
-              activeDot={{ r: 6, fill: color }}
-            />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
-  );
-};
 
 export default StatisticsComponent;

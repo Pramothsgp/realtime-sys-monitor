@@ -10,8 +10,15 @@ app.on('ready', () => {
   const mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
+    frame: true,
+    title: 'System Monitor',
+    resizable: true,
+    autoHideMenuBar: true,
+    icon: path.join(app.getAppPath(), '../dist-react/assets/icon.ico'),
     webPreferences: {
-      preload: getPreLoadPath()
+      preload: getPreLoadPath(),
+      contextIsolation: true,
+      nodeIntegration: false,
     }
   });
   if(isDev()) {
