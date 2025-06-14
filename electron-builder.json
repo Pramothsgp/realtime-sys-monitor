@@ -1,0 +1,29 @@
+{
+    "appId": "com.jarvis-tech.cpu-manager",
+    "productName": "CPU Manager",
+    "extraResources": [
+        "dist-electron/preload.cjs",
+    ],
+    "files": [
+        "dist-electron",
+        "dist-react"
+    ],
+    "icon": "src/ui/assets/icon.png",
+    "mac":{
+        "target" : "dmg"
+    },
+    "linux": {
+        "target": [
+            "AppImage",
+            "deb"
+        ],
+        "category": "Utility"
+    },
+    "win": {
+        "target": [
+            "portable",
+            "msi"
+        ]
+    }
+
+}
