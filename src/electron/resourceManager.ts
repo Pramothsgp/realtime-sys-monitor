@@ -1,6 +1,7 @@
 import osUtils from 'os-utils';
 import fs from 'fs';
 import os from 'os';
+import si from 'systeminformation';
 import { BrowserWindow } from 'electron';
 
 const POLLING_INTERVAL = 1000; // 1 second
@@ -59,4 +60,22 @@ const getStorageData = () : { total: number; used: number; free: number } => {
         used: used / (1024 * 1024 * 1024), // Convert to GB
         free: free / (1024 * 1024 * 1024) // Convert to GB
     };
+}
+
+
+async function getProcesses() {
+  try {
+    const data = await si.processes();
+    return {totalProcesses: data.all, processes: data.list};
+  } catch (error) {
+    console.error('Failed to get processes:', error);
+    return {totalProcesses: 0, processes: []};
+  }
+}
+
+export const getAllProcesses = (mainWindow: BrowserWindow) => {
+    setInterval(async () => {
+        const processes = await getProcesses();
+        mainWindow.webContents.send('process-update', processes);
+    }, POLLING_INTERVAL);
 }
