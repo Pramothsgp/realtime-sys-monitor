@@ -1,17 +1,15 @@
-import { Subscript } from "lucide-react";
+import { contextBridge, ipcRenderer } from 'electron';
 
-const electron = require('electron');
+contextBridge.exposeInMainWorld('electron', {
+  subscribeStatistics: (callback: (stats: any) => void) => {
+    ipcRenderer.on('resource-update', (_event, stats) => callback(stats));
+  },
 
-electron.contextBridge.exposeInMainWorld('electron', {
-    subscribeStatistics: (callback : (statistics : any) => void) => {
-        electron.ipcRenderer.on('resource-update', (event : Event, statistics : any) => {
-            callback(statistics);
-        });
-    },
-    subscribeProcessUpdate: (callback : (processes : any) => void) => {
-        electron.ipcRenderer.on('process-update', (event : Event, processes : any) => {
-            callback(processes);
-        });
-    },
-    getStatistics: () => electron.ipcRenderer.invoke('get-static-data'),
-})
+  subscribeProcessUpdate: (callback: (processes: any) => void) => {
+    ipcRenderer.on('process-update', (_event, processes) => callback(processes));
+  },
+
+  getStatistics: (): Promise<any> => ipcRenderer.invoke('get-static-data'),
+
+  killProcess: (pid: number): Promise<any> => ipcRenderer.invoke('kill-process', pid),
+});
